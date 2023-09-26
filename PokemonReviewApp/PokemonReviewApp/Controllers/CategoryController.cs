@@ -89,5 +89,59 @@ namespace PokemonReviewApp.Controllers
 
             return Ok("Successfully created");
         }
+
+        [HttpPut("{categoryId}")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        public IActionResult UpdateCategory(int categoryId,
+            [FromBody] CategoryDto category)
+        {
+            if (category == null)
+                return BadRequest(ModelState);
+
+            if (categoryId != category.Id)
+                return BadRequest(ModelState);
+
+            if (!_categoryRepository.CategoryExists(categoryId))
+                return NotFound();
+
+            if (!ModelState.IsValid)
+                return BadRequest();
+
+            var categoryMap = _mapper.Map<Category>(category);
+
+            if (!_categoryRepository.UpdateCategory(categoryMap))
+            {
+                ModelState.TryAddModelError("", 
+                    "Something went wrong updating category");
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
+        }
+
+        [HttpDelete("{categoryId}")]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        public IActionResult DeleteCategory(int categoryId)
+        {
+            if (!_categoryRepository.CategoryExists(categoryId))
+                return NotFound();
+
+            var categoryMap = _categoryRepository.GetCategory(categoryId);
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_categoryRepository.DeleteCategory(categoryMap))
+            {
+                ModelState.AddModelError("",
+                    "Something went wrong deleting category");
+            }
+
+            return NoContent();
+        }
     }
 }

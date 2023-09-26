@@ -66,6 +66,7 @@ namespace PokemonReviewApp.Controllers
 
             return Ok(result);
         }
+
         [HttpPost]
         public IActionResult CreateReview(
            [FromBody] ReviewerDto reviewer)
@@ -93,6 +94,54 @@ namespace PokemonReviewApp.Controllers
             }
 
             return Ok("Successfully created");
+        }
+
+        [HttpPut("{reviewerId}")]
+        public IActionResult UpdateReviewer(int reviewerId,
+            [FromBody] ReviewerDto reviewer)
+        {
+            if (reviewer == null)
+                return BadRequest(ModelState);
+
+            if (reviewerId != reviewer.Id)
+                return BadRequest(ModelState);
+
+            if (!_reviewerRepository.ReviewerExists(reviewerId))
+                return NotFound();
+
+            if (!ModelState.IsValid)
+                return BadRequest();
+
+            var reviewerMap = _mapper.Map<Reviewer>(reviewer);
+
+            if (!_reviewerRepository.UpdateReviewer(reviewerMap))
+            {
+                ModelState.TryAddModelError("",
+                    "Something went wrong updating reviewer");
+                return StatusCode(500, ModelState);
+            }
+
+            return NoContent();
+        }
+
+        [HttpDelete("{reviewerId}")]
+        public IActionResult DeleteReviewer(int reviewerId)
+        {
+            if (!_reviewerRepository.ReviewerExists(reviewerId))
+                return NotFound();
+
+            var reviewerMap = _reviewerRepository.GetReviewer(reviewerId);
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!_reviewerRepository.DeleteReviewer(reviewerMap))
+            {
+                ModelState.AddModelError("",
+                    "Something went wrong deleting reviewer");
+            }
+
+            return NoContent();
         }
     }
 }
