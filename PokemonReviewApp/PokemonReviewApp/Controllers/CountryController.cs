@@ -11,10 +11,13 @@ namespace PokemonReviewApp.Controllers
     public class CountryController : Controller
     {
         private readonly ICountryRepository _countryRepository;
+        private readonly IMapper _mapper;
 
-        public CountryController(ICountryRepository countryRepository)
+        public CountryController(ICountryRepository countryRepository,
+            IMapper mapper)
         {
             _countryRepository = countryRepository;
+            _mapper = mapper;   
         }
 
         [HttpGet]
@@ -60,5 +63,36 @@ namespace PokemonReviewApp.Controllers
 
         //    return Ok(country);
         //}
+
+        [HttpPost]
+        public IActionResult CreateCountry([FromBody] 
+            CountryDto country)
+        {
+            if (country == null)
+                return BadRequest(ModelState);
+
+            var response = _countryRepository.GetCountries().
+                Where(p => p.Name.ToUpper() == country.Name.ToUpper()).
+                FirstOrDefault();
+
+            if (response != null)
+            {
+                ModelState.AddModelError("", "Country already exists");
+                return StatusCode(422, ModelState);
+            }
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var countryMap = _mapper.Map<Country>(country);
+
+            if (!_countryRepository.CreateCountry(countryMap))
+            {
+                ModelState.AddModelError("", "Something went wrong with saving");
+                return StatusCode(500, ModelState);
+            }
+
+            return Ok("Successfully created");
+        }
     }
 }

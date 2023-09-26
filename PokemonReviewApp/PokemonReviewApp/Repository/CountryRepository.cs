@@ -13,33 +13,45 @@ namespace PokemonReviewApp.Repository
             _context = context;
         }
 
-        bool ICountryRepository.CountryExists(int id)
+        public bool CountryExists(int id)
         {
             return _context.Countries.Any(p => p.Id == id);
         }
 
-        ICollection<Country> ICountryRepository.GetCountries()
+        public ICollection<Country> GetCountries()
         {
             return _context.Countries.ToList();
         }
 
-        Country ICountryRepository.GetCountry(int id)
+        public Country GetCountry(int id)
         {
             return _context.Countries.Where(p => 
                 p.Id == id).FirstOrDefault();
         }
 
-        Country ICountryRepository.GetCountryByOwner(int ownerId)
+        public Country GetCountryByOwner(int ownerId)
         {
             return _context.Owners.Where(p =>
                 p.Id == ownerId).Select(p => 
                 p.Country).FirstOrDefault();
         }
 
-        ICollection<Owner> ICountryRepository.GetOwnersFromCountry(int countryId)
+        public ICollection<Owner> GetOwnersFromCountry(int countryId)
         {
             return _context.Owners.Where(p =>
                 p.Country.Id == countryId).ToList();
+        }
+        
+        public bool CreateCountry(Country country)
+        {
+            _context.Add(country);
+            return Save();
+        }
+
+        public bool Save()
+        {
+            var saved = _context.SaveChanges();
+            return saved > 0 ? true : false;
         }
     }
 }

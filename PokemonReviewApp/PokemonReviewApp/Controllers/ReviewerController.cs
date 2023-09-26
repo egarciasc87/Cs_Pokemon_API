@@ -11,10 +11,14 @@ namespace PokemonReviewApp.Controllers
     public class ReviewerController : Controller
     {
         private readonly IReviewerRepository _reviewerRepository;
+        private readonly IMapper _mapper;
 
-        public ReviewerController(IReviewerRepository reviewerRepository)
+        public ReviewerController(
+            IReviewerRepository reviewerRepository,
+            IMapper mapper)
         {
             _reviewerRepository = reviewerRepository;
+            _mapper = mapper;   
         }
 
         [HttpGet]
@@ -61,6 +65,34 @@ namespace PokemonReviewApp.Controllers
                 return BadRequest(ModelState);
 
             return Ok(result);
+        }
+        [HttpPost]
+        public IActionResult CreateReview(
+           [FromBody] ReviewerDto reviewer)
+        {
+            if (reviewer == null)
+                return BadRequest(ModelState);
+
+            var response = _reviewerRepository.GetReviewers().
+                Where(p => p.LastName.ToUpper() == reviewer.LastName.ToUpper()).
+                FirstOrDefault();
+
+            if (response != null)
+            {
+                ModelState.AddModelError("", "Reviewer already exists");
+                return StatusCode(422, ModelState);
+            }
+
+            var reviewerMap = _mapper.Map<Reviewer>(reviewer);
+
+            if (!_reviewerRepository.CreateReviewer(
+                reviewerMap))
+            {
+                ModelState.AddModelError("", "Something went wrong with saving");
+                return StatusCode(500, ModelState);
+            }
+
+            return Ok("Successfully created");
         }
     }
 }
